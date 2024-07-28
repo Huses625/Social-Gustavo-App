@@ -25,7 +25,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
     try {
       await _firestore.collection('posts').doc(widget.post.id).update({
         'content': _contentController.text,
-        'timestamp': DateTime.now().toIso8601String(),
+        'timestamp': Timestamp.now(), // Use Timestamp.now() instead of DateTime
       });
       Navigator.pop(context);
       print('Post edited successfully');
