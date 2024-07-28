@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:gustavo_firebase/model/post_model.dart';
 import 'package:gustavo_firebase/screen/main_screen.dart';
-import 'package:gustavo_firebase/screen/newsfeed_screen.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -63,11 +62,35 @@ class _AddPostScreenState extends State<AddPostScreen> {
       String fileName = DateTime.now().millisecondsSinceEpoch.toString();
       Reference storageRef =
           _storage.ref().child('post_images').child(fileName);
+
+      // Show progress SnackBar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text('Uploading image...'),
+            ],
+          ),
+          duration: Duration(minutes: 1),
+        ),
+      );
+
       UploadTask uploadTask = storageRef.putFile(image);
       TaskSnapshot taskSnapshot = await uploadTask;
+
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You have successfully shared your post!')),
+      );
+
       return await taskSnapshot.ref.getDownloadURL();
     } catch (e) {
-      print('Error uploading image: $e');
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error uploading image: $e')),
+      );
       return null;
     }
   }
@@ -98,7 +121,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
             userId: user.uid,
             username: username,
             content: _contentController.text,
-            timestamp: Timestamp.now(), // Use Timestamp.now() here
+            timestamp: Timestamp.now(),
             likes: [],
             comments: 0,
             imageUrl: imageUrl,

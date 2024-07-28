@@ -27,6 +27,9 @@ class _NewsfeedScreenState extends State<NewsfeedScreen> {
   String? _profileImageUrl;
   int _unreadCount = 0;
 
+  // Keep track of follow requests
+  Set<String> _requestedFollows = {};
+
   @override
   void initState() {
     super.initState();
@@ -204,7 +207,7 @@ class _NewsfeedScreenState extends State<NewsfeedScreen> {
     }
   }
 
-  Future<void> _sendFollowRequest(String userId) async {
+  Future<void> _sendFollowRequest(String userId, String firstName) async {
     User? currentUser = _auth.currentUser;
     if (currentUser != null) {
       QuerySnapshot requestSnapshot = await _firestore
@@ -229,7 +232,15 @@ class _NewsfeedScreenState extends State<NewsfeedScreen> {
           'timestamp': FieldValue.serverTimestamp(),
         });
 
-        setState(() {});
+        setState(() {
+          _requestedFollows.add(userId); // Update the state
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Your request has been sent to $firstName.'),
+          ),
+        );
       }
     }
   }
@@ -383,11 +394,13 @@ class _NewsfeedScreenState extends State<NewsfeedScreen> {
                                   }).toList();
                                 },
                               );
-                            } else if (!isFollowing) {
+                            } else if (!isFollowing &&
+                                !_requestedFollows.contains(post.userId)) {
                               return IconButton(
                                 icon: Icon(Icons.person_add),
                                 onPressed: () {
-                                  _sendFollowRequest(post.userId);
+                                  _sendFollowRequest(
+                                      post.userId, post.username.split(' ')[0]);
                                 },
                               );
                             } else {

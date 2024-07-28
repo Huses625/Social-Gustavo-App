@@ -52,9 +52,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       String filePath = isCover
           ? 'cover_images/${_user!.uid}.png'
           : 'profile_images/${_user!.uid}.png';
+
+      // Show progress SnackBar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text('Uploading image...'),
+            ],
+          ),
+          duration: Duration(minutes: 1),
+        ),
+      );
+
       await _storage.ref(filePath).putFile(_imageFile!);
+
       String downloadUrl = await _storage.ref(filePath).getDownloadURL();
       await _updateUserProfilePicture(downloadUrl, isCover: isCover);
+
       if (mounted) {
         setState(() {
           if (isCover) {
@@ -64,8 +81,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           }
         });
       }
+
+      // Hide progress SnackBar and show success SnackBar
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image uploaded successfully!')),
+      );
     } catch (e) {
-      print('Error uploading image: $e');
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error uploading image: $e')),
+      );
     }
   }
 
