@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1080574566902",
+    "project_id": "gustavo-v1",
+    "storage_bucket": "gustavo-v1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1080574566902:android:a00a80c86d276e000e27d7",
+        "android_client_info": {
+          "package_name": "com.example.gustavo_firebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBsi4G5FwANYzaIcQjn8Qd_4u1trk0mvTM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
