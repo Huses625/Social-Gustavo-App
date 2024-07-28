@@ -204,6 +204,51 @@ class _NewsfeedScreenState extends State<NewsfeedScreen> {
     }
   }
 
+  Future<void> _sendFollowRequest(String userId) async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      QuerySnapshot requestSnapshot = await _firestore
+          .collection('followRequests')
+          .where('from', isEqualTo: currentUser.uid)
+          .where('to', isEqualTo: userId)
+          .where('status', isEqualTo: 'pending')
+          .get();
+
+      if (requestSnapshot.docs.isEmpty) {
+        await _firestore.collection('followRequests').add({
+          'from': currentUser.uid,
+          'to': userId,
+          'status': 'pending',
+        });
+
+        // Optionally, you can send a notification to the viewed user
+        await _firestore.collection('notifications').add({
+          'recipientId': userId,
+          'title': 'Follow Request',
+          'body': '${currentUser.displayName} wants to follow you.',
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+
+        setState(() {});
+      }
+    }
+  }
+
+  Future<bool> _isFollowing(String userId) async {
+    User? currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      DocumentSnapshot followDoc = await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('following')
+          .doc(userId)
+          .get();
+
+      return followDoc.exists;
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -305,8 +350,16 @@ class _NewsfeedScreenState extends State<NewsfeedScreen> {
                               .split(' ')[0],
                           style: TextStyle(fontSize: 12),
                         ),
-                        trailing: isOwner
-                            ? PopupMenuButton<String>(
+                        trailing: FutureBuilder<bool>(
+                          future: _isFollowing(post.userId),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return CircularProgressIndicator();
+                            }
+                            bool isFollowing = snapshot.data ?? false;
+                            if (isOwner) {
+                              return PopupMenuButton<String>(
                                 onSelected: (value) {
                                   if (value == 'Edit') {
                                     Navigator.push(
@@ -329,8 +382,19 @@ class _NewsfeedScreenState extends State<NewsfeedScreen> {
                                     );
                                   }).toList();
                                 },
-                              )
-                            : null,
+                              );
+                            } else if (!isFollowing) {
+                              return IconButton(
+                                icon: Icon(Icons.person_add),
+                                onPressed: () {
+                                  _sendFollowRequest(post.userId);
+                                },
+                              );
+                            } else {
+                              return SizedBox.shrink();
+                            }
+                          },
+                        ),
                       ),
                       if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
                         Padding(
